@@ -1,6 +1,11 @@
 {
   "dependencies": [
     {
+      "name": "@aws-sdk/client-sts",
+      "version": "^3.42.0",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -27,6 +32,10 @@
     {
       "name": "constructs",
       "version": "10.0.5",
+      "type": "build"
+    },
+    {
+      "name": "esbuild",
       "type": "build"
     },
     {
@@ -91,6 +100,10 @@
     },
     {
       "name": "ts-jest",
+      "type": "build"
+    },
+    {
+      "name": "ts-node",
       "type": "build"
     },
     {

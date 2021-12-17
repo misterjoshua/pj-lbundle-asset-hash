@@ -38,7 +38,6 @@ junit.xml
 !/.github/workflows/build.yml
 /dist/changelog.md
 /dist/version.txt
-!/.github/workflows/release.yml
 !/.mergify.yml
 !/.github/pull_request_template.md
 !/test/
@@ -50,4 +49,17 @@ junit.xml
 .jsii
 tsconfig.json
 !/API.md
+/assets/
+!/src/example-function.ts
+test/example.integ.snapshot/asset.*
+test/example.integ.snapshot/**/asset.*
+test/example.integ.snapshot/cdk.out
+test/example.integ.snapshot/**/cdk.out
+test/example.integ.snapshot/manifest.json
+test/example.integ.snapshot/**/manifest.json
+test/example.integ.snapshot/tree.json
+test/example.integ.snapshot/**/tree.json
+test/.tmp/example.integ/deploy.cdk.out
+test/.tmp/example.integ/synth.cdk.out
+!test/example.integ.snapshot
 !/.github/workflows/upgrade-main.yml

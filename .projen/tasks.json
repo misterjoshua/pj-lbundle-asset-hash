@@ -40,6 +40,33 @@
       ],
       "condition": "! git log --oneline -1 | grep -q \"chore(release):\""
     },
+    "bundle": {
+      "name": "bundle",
+      "description": "Prepare assets",
+      "steps": [
+        {
+          "spawn": "bundle:example.lambda"
+        }
+      ]
+    },
+    "bundle:example.lambda": {
+      "name": "bundle:example.lambda",
+      "description": "Create a JavaScript bundle from src/example.lambda.ts",
+      "steps": [
+        {
+          "exec": "esbuild --bundle src/example.lambda.ts --target=\"node14\" --platform=\"node\" --outfile=\"assets/example.lambda/index.js\" --external:aws-sdk"
+        }
+      ]
+    },
+    "bundle:example.lambda:watch": {
+      "name": "bundle:example.lambda:watch",
+      "description": "Continuously update the JavaScript bundle from src/example.lambda.ts",
+      "steps": [
+        {
+          "exec": "esbuild --bundle src/example.lambda.ts --target=\"node14\" --platform=\"node\" --outfile=\"assets/example.lambda/index.js\" --external:aws-sdk --watch"
+        }
+      ]
+    },
     "clobber": {
       "name": "clobber",
       "description": "hard resets to HEAD of origin and cleans the local repo",
@@ -117,6 +144,69 @@
         }
       ]
     },
+    "integ:example:assert": {
+      "name": "integ:example:assert",
+      "description": "assert the snapshot of integration test 'example'",
+      "steps": [
+        {
+          "exec": "[ -d \"test/example.integ.snapshot\" ] || (echo \"No snapshot available for integration test 'example'. Run 'projen integ:example:deploy' to capture.\" && exit 1)"
+        },
+        {
+          "exec": "cdk synth --app \"ts-node -P tsconfig.dev.json test/example.integ.ts\" --no-version-reporting -o test/.tmp/example.integ/synth.cdk.out > /dev/null"
+        },
+        {
+          "exec": "diff -r -x asset.* -x cdk.out -x manifest.json -x tree.json test/example.integ.snapshot/ test/.tmp/example.integ/synth.cdk.out/"
+        }
+      ]
+    },
+    "integ:example:deploy": {
+      "name": "integ:example:deploy",
+      "description": "deploy integration test 'example' and capture snapshot",
+      "steps": [
+        {
+          "exec": "rm -fr test/.tmp/example.integ/deploy.cdk.out"
+        },
+        {
+          "exec": "cdk deploy --app \"ts-node -P tsconfig.dev.json test/example.integ.ts\" --no-version-reporting --require-approval=never -o test/.tmp/example.integ/deploy.cdk.out"
+        },
+        {
+          "exec": "rm -fr test/example.integ.snapshot"
+        },
+        {
+          "exec": "mv test/.tmp/example.integ/deploy.cdk.out test/example.integ.snapshot"
+        },
+        {
+          "spawn": "integ:example:destroy"
+        }
+      ]
+    },
+    "integ:example:destroy": {
+      "name": "integ:example:destroy",
+      "description": "destroy integration test 'example'",
+      "steps": [
+        {
+          "exec": "cdk destroy --app test/example.integ.snapshot --no-version-reporting"
+        }
+      ]
+    },
+    "integ:example:snapshot": {
+      "name": "integ:example:snapshot",
+      "description": "update snapshot for integration test \"example\"",
+      "steps": [
+        {
+          "exec": "cdk synth --app \"ts-node -P tsconfig.dev.json test/example.integ.ts\" --no-version-reporting -o test/example.integ.snapshot > /dev/null"
+        }
+      ]
+    },
+    "integ:example:watch": {
+      "name": "integ:example:watch",
+      "description": "watch integration test 'example' (without updating snapshots)",
+      "steps": [
+        {
+          "exec": "cdk watch --app \"ts-node -P tsconfig.dev.json test/example.integ.ts\" --no-version-reporting -o test/.tmp/example.integ/deploy.cdk.out"
+        }
+      ]
+    },
     "package": {
       "name": "package",
       "description": "Creates the distribution package",
@@ -137,7 +227,33 @@
     },
     "pre-compile": {
       "name": "pre-compile",
-      "description": "Prepare the project for compilation"
+      "description": "Prepare the project for compilation",
+      "steps": [
+        {
+          "spawn": "bundle"
+        }
+      ]
+    },
+    "publish:git": {
+      "name": "publish:git",
+      "description": "Prepends the release changelog onto the project changelog, creates a release commit, and tags the release",
+      "env": {
+        "CHANGELOG": "dist/changelog.md",
+        "RELEASE_TAG_FILE": "dist/releasetag.txt",
+        "PROJECT_CHANGELOG_FILE": "CHANGELOG.md",
+        "VERSION_FILE": "dist/version.txt"
+      },
+      "steps": [
+        {
+          "builtin": "release/update-changelog"
+        },
+        {
+          "builtin": "release/tag-version"
+        },
+        {
+          "exec": "git push --follow-tags origin main"
+        }
+      ]
     },
     "release": {
       "name": "release",
@@ -159,6 +275,9 @@
           "spawn": "unbump"
         },
         {
+          "spawn": "publish:git"
+        },
+        {
           "exec": "git diff --ignore-space-at-eol --exit-code"
         }
       ]
@@ -172,6 +291,9 @@
         },
         {
           "spawn": "eslint"
+        },
+        {
+          "spawn": "integ:example:assert"
         }
       ]
     },
@@ -234,7 +356,7 @@
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit jsii jsii-diff jsii-docgen jsii-pacmak json-schema npm-check-updates standard-version ts-jest typescript aws-cdk-lib constructs"
+          "exec": "yarn upgrade @aws-sdk/client-sts @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs esbuild eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit jsii jsii-diff jsii-docgen jsii-pacmak json-schema npm-check-updates standard-version ts-jest ts-node typescript aws-cdk-lib constructs"
         },
         {
           "exec": "npx projen"
