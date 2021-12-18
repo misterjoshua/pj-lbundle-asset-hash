@@ -222,6 +222,9 @@
       "steps": [
         {
           "spawn": "docgen"
+        },
+        {
+          "spawn": "integ:example:snapshot"
         }
       ]
     },

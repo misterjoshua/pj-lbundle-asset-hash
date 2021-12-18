@@ -21,4 +21,6 @@ const project = new awscdk.AwsCdkConstructLibrary({
   // release: undefined,      /* Add release management to this project. */
 });
 
+project.postCompileTask.spawn(project.tasks.tryFind('integ:example:snapshot'));
+
 project.synth();
