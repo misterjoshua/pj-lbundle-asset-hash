@@ -10,6 +10,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
 
   devDeps: [
     '@aws-sdk/client-sts@^3.42.0',
+    'aws-cdk',
   ],
 
   releaseTrigger: release.ReleaseTrigger.manual(),
@@ -21,6 +22,8 @@ const project = new awscdk.AwsCdkConstructLibrary({
   // release: undefined,      /* Add release management to this project. */
 });
 
-project.postCompileTask.spawn(project.tasks.tryFind('integ:example:snapshot'));
+project.postCompileTask.spawn(
+  project.tasks.tryFind('integ:example:snapshot'),
+);
 
 project.synth();
